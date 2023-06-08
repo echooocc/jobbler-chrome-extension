@@ -23,12 +23,22 @@ function App() {
     const jobTitleElement = document.querySelector('.jobs-unified-top-card__job-title');
     const companyElement = document.querySelector('.jobs-unified-top-card__company-name a');
   
-    return { 
+    return {
       title: jobTitleElement?.textContent.trim() || '',
       company: companyElement?.textContent.trim() || ''
     };
   };
 
+  const extractGlassdoorJobInfo = () => {
+    const jobTitleElement = document.querySelector('div[data-test="jobTitle"]');
+    const companyElement = document.querySelector('div[data-test="employerName"]');
+  
+    return {
+      title: jobTitleElement?.textContent.trim() || '',
+      company: companyElement?.firstChild.textContent.trim() || ''
+    };
+  };
+  
   const getJobInfo = async () => {
     setIsLoading(true);
     setIsError(false);
@@ -71,7 +81,7 @@ function App() {
           setIsLoading(false);
         });
       return;
-    } 
+    }
 
     if (url && url.startsWith('https://www.linkedin.com/jobs/view/')) {
       chrome.scripting.executeScript(
@@ -97,7 +107,35 @@ function App() {
         }
       );
       return;
-    } 
+    }
+
+    if (url && url.startsWith('https://www.glassdoor.ca/Job/')) {
+      chrome.scripting.executeScript(
+        {
+          target: { tabId: tab.id },
+          function: extractGlassdoorJobInfo,
+        },
+        (result) => {
+          if (chrome.runtime.lastError) {
+            console.error('Error executing script:', chrome.runtime.lastError);
+            return;
+          }
+          const {title, company} = result[0].result;
+          setIsLoading(false);
+
+          console.log('glassdoor', result[0].result)
+          if (title) {
+            setJobInfo({ title, company, url });
+            if(title.length === 0){
+              setNoJobDetected(true);
+            }
+          } else {
+            setIsError(true);
+          }
+        }
+      );
+      return;
+    }
 
     setIsLoading(false);
     setNoJobDetected(true);
