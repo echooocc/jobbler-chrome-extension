@@ -18,7 +18,18 @@ function App() {
 
   const notion = new Client({ auth: import.meta.env.VITE_NOTION_KEY || '' });
 
-  const getCurrContent = async () => {
+  const extractLinkedInJobInfo = () => {
+    // Extract job information from LinkedIn job page
+    const jobTitleElement = document.querySelector('.jobs-unified-top-card__job-title');
+    const companyElement = document.querySelector('.jobs-unified-top-card__company-name a');
+  
+    return { 
+      title: jobTitleElement?.textContent.trim() || '',
+      company: companyElement?.textContent.trim() || ''
+    };
+  };
+
+  const getJobInfo = async () => {
     setIsLoading(true);
     setIsError(false);
     setNoJobDetected(false);
@@ -62,12 +73,38 @@ function App() {
       return;
     } 
 
+    if (url && url.startsWith('https://www.linkedin.com/jobs/view/')) {
+      chrome.scripting.executeScript(
+        {
+          target: { tabId: tab.id },
+          function: extractLinkedInJobInfo,
+        },
+        (result) => {
+          if (chrome.runtime.lastError) {
+            console.error('Error executing script:', chrome.runtime.lastError);
+            return;
+          }
+          const {title, company} = result[0].result;
+          setIsLoading(false);
+          if (title) {
+            setJobInfo({ title, company, url });
+            if(title.length === 0){
+              setNoJobDetected(true);
+            }
+          } else {
+            setIsError(true);
+          }
+        }
+      );
+      return;
+    } 
+
     setIsLoading(false);
     setNoJobDetected(true);
-  };
+  };  
 
   useEffect(() => {
-    getCurrContent();
+    getJobInfo();
 
   }, []);
 
@@ -159,7 +196,7 @@ function App() {
         </svg>
       }
       {!isLoading && noJobDetected && <div>no job detected</div>}
-      {!isLoading && !noJobDetected && (
+      {!isLoading && !noJobDetected && !isError && (
         <div className="flex flex-col items-center">
           <div className="text-lg pb-8">
             <span >{jobInfo.title}</span>
@@ -167,12 +204,12 @@ function App() {
             <span className=" underline decoration-wavy">{jobInfo.company}</span>
           </div>
           {showSaveButton && (
-            <button className="w-6/12 px-8 py-2 rounded max-w-sm bg-gray-100 hover:bg-gray-200" onClick={handleSave}>
+            <button className="w-8/12 px-8 py-2 rounded max-w-sm bg-gray-100 hover:bg-gray-200" onClick={handleSave}>
               <span className="text-base text-stone-600">{
                 savedStatus === 'inprocess' ? 'Processing...' :
                 savedStatus === 'success' ? 'Saved' :
                 savedStatus === 'fail' ? 'Try Again' :
-                'Add to Notion'
+                'Save'
               }</span>
             </button>
           )}

@@ -34,6 +34,7 @@ export default defineManifest({
   ],
   permissions: [
     "tabs",
-    "activeTab"
+    "activeTab",
+    "scripting"
   ],
 })
