@@ -35,6 +35,17 @@ function App() {
     }
   }
 
+  const extractJobInfForGlassdoor = (titleClassName: string, companyClassName: string) => {
+    const jobTitleElement = document.querySelector(titleClassName)
+    const companyElement = document.querySelector(companyClassName)
+
+    return {
+      title: jobTitleElement?.textContent?.trim() || '',
+      // remove numerical review from the company name
+      company: companyElement?.firstChild?.textContent?.trim() || '',
+    }
+  }
+
   const parseDomContentCallBack = (result: any, url: string) => {
     if (chrome.runtime.lastError) {
       console.error('Error executing script:', chrome.runtime.lastError)
@@ -118,7 +129,7 @@ function App() {
       chrome.scripting.executeScript(
         {
           target: { tabId: tab.id },
-          func: extractJobInfoByDomClassNames,
+          func: extractJobInfForGlassdoor,
           args: ['div[data-test="jobTitle"]', 'div[data-test="employerName"]'],
         },
         (result) => parseDomContentCallBack(result, url),
