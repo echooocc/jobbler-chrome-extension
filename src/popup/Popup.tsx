@@ -18,13 +18,20 @@ function App() {
 
   const notion = new Client({ auth: import.meta.env.VITE_NOTION_KEY || '' })
 
-  const extractJobInfoByDomClassName = (titleClassName: string, companyClassName: string) => {
+  const extractJobInfoByDomClassNames = (titleClassName: string, companyClassName: string) => {
     const jobTitleElement = document.querySelector(titleClassName)
     const companyElement = document.querySelector(companyClassName)
 
     return {
       title: jobTitleElement?.textContent?.trim() || '',
       company: companyElement?.textContent?.trim() || '',
+    }
+  }
+  const extractTitleInfoByDomClassName = (titleClassName: string) => {
+    const jobTitleElement = document.querySelector(titleClassName)
+    console.log(jobTitleElement)
+    return {
+      title: jobTitleElement?.textContent?.trim() || '',
     }
   }
 
@@ -35,6 +42,28 @@ function App() {
     }
     const { title, company } = result[0].result as { title: string; company: string }
     setIsLoading(false)
+
+    if (title) {
+      setJobInfo({ title, company, url })
+      if (title.length === 0) {
+        setNoJobDetected(true)
+      }
+    } else {
+      setIsError(true)
+    }
+  }
+
+  // wellfound return Senior Web Developer at Circle under data-test="JobDetail"
+  const parseAndFormatTitleContentCallBackForWellfound = (result: any, url: string) => {
+    if (chrome.runtime.lastError) {
+      console.error('Error executing script:', chrome.runtime.lastError)
+      return
+    }
+    let { title } = result[0].result as { title: string }
+    const company = title.split('at')[1]
+    title = title.split('at')[0]
+    setIsLoading(false)
+
     if (title) {
       setJobInfo({ title, company, url })
       if (title.length === 0) {
@@ -65,7 +94,7 @@ function App() {
       chrome.scripting.executeScript(
         {
           target: { tabId: tab.id },
-          func: extractJobInfoByDomClassName,
+          func: extractJobInfoByDomClassNames,
           args: ['.listing-header-container h1', '.listing-header-container h2'],
         },
         (result) => parseDomContentCallBack(result, url),
@@ -77,7 +106,7 @@ function App() {
       chrome.scripting.executeScript(
         {
           target: { tabId: tab.id },
-          func: extractJobInfoByDomClassName,
+          func: extractJobInfoByDomClassNames,
           args: ['.jobs-unified-top-card__job-title', '.jobs-unified-top-card__company-name a'],
         },
         (result) => parseDomContentCallBack(result, url),
@@ -89,10 +118,22 @@ function App() {
       chrome.scripting.executeScript(
         {
           target: { tabId: tab.id },
-          func: extractJobInfoByDomClassName,
+          func: extractJobInfoByDomClassNames,
           args: ['div[data-test="jobTitle"]', 'div[data-test="employerName"]'],
         },
         (result) => parseDomContentCallBack(result, url),
+      )
+      return
+    }
+
+    if (url && url.startsWith('https://wellfound.com/company/')) {
+      chrome.scripting.executeScript(
+        {
+          target: { tabId: tab.id },
+          func: extractTitleInfoByDomClassName,
+          args: ['div[data-test="JobDetail"] h1'],
+        },
+        (result) => parseAndFormatTitleContentCallBackForWellfound(result, url),
       )
       return
     }
