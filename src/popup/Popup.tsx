@@ -21,12 +21,12 @@ function App() {
   const extractJobInfoByDomClassNames = (titleClassName: string, companyClassName: string) => {
     const jobTitleElement = document.querySelector(titleClassName)
     const companyElement = document.querySelector(companyClassName)
-
     return {
       title: jobTitleElement?.textContent?.trim() || '',
       company: companyElement?.textContent?.trim() || '',
     }
   }
+
   const extractTitleInfoByDomClassName = (titleClassName: string) => {
     const jobTitleElement = document.querySelector(titleClassName)
     console.log(jobTitleElement)
@@ -46,15 +46,25 @@ function App() {
     }
   }
 
+  const extractJobInfoWithImgAlt = (titleClassName: string, companyClassName: string) => {
+    const jobTitleElement = document.querySelector(titleClassName)
+    const companyImgElement = document.querySelector(companyClassName)
+    return {
+      title: jobTitleElement?.textContent?.trim() || '',
+      company: companyImgElement?.getAttribute('alt') || '',
+    }
+  }
+
   const parseDomContentCallBack = (result: any, url: string) => {
     if (chrome.runtime.lastError) {
       console.error('Error executing script:', chrome.runtime.lastError)
       return
     }
-    const { title, company } = result[0].result as { title: string; company: string }
+    let { title, company } = result[0].result as { title: string; company: string }
     setIsLoading(false)
-
-    if (title) {
+    // remove trailing '-' || prefix 'at'
+    company = company.replace(/\s*-\s*|\bat\s*|\blogo\s*|\bis hiring a\s*/i, '')
+    if (title || company) {
       setJobInfo({ title, company, url })
       if (title.length === 0) {
         setNoJobDetected(true)
@@ -113,7 +123,7 @@ function App() {
       return
     }
 
-    if (url && url.startsWith('https://www.linkedin.com/jobs/view/')) {
+    if (url && url.startsWith('https://www.linkedin.com/jobs/')) {
       chrome.scripting.executeScript(
         {
           target: { tabId: tab.id },
@@ -145,6 +155,66 @@ function App() {
           args: ['div[data-test="JobDetail"] h1'],
         },
         (result) => parseAndFormatTitleContentCallBackForWellfound(result, url),
+      )
+      return
+    }
+
+    if (url && url.startsWith('https://www.simplyhired.ca/')) {
+      chrome.scripting.executeScript(
+        {
+          target: { tabId: tab.id },
+          func: extractJobInfForGlassdoor,
+          args: ['div[data-testid="VJ-header-title"]', 'div[data-testid="VJ-header-companyInfo"]'],
+        },
+        (result) => parseDomContentCallBack(result, url),
+      )
+      return
+    }
+
+    if (url && url.startsWith('https://boards.greenhouse.io/')) {
+      chrome.scripting.executeScript(
+        {
+          target: { tabId: tab.id },
+          func: extractJobInfoByDomClassNames,
+          args: ['.app-title', '.company-name'],
+        },
+        (result) => parseDomContentCallBack(result, url),
+      )
+      return
+    }
+
+    if (url && url.startsWith('https://startup.jobs/')) {
+      chrome.scripting.executeScript(
+        {
+          target: { tabId: tab.id },
+          func: extractJobInfoByDomClassNames,
+          args: ['.visualHeader__title', '.visualHeader__subtitle'],
+        },
+        (result) => parseDomContentCallBack(result, url),
+      )
+      return
+    }
+
+    if (url && url.startsWith('https://apply.workable.com/')) {
+      chrome.scripting.executeScript(
+        {
+          target: { tabId: tab.id },
+          func: extractJobInfoWithImgAlt,
+          args: ['h1[data-ui="job-title"]', 'a[data-ui="company-logo"] img'],
+        },
+        (result) => parseDomContentCallBack(result, url),
+      )
+      return
+    }
+
+    if (url && url.startsWith('https://jobs.lever.co/')) {
+      chrome.scripting.executeScript(
+        {
+          target: { tabId: tab.id },
+          func: extractJobInfoWithImgAlt,
+          args: ['.section.page-centered.posting-header h2', '.main-header-logo img'],
+        },
+        (result) => parseDomContentCallBack(result, url),
       )
       return
     }
