@@ -1,10 +1,23 @@
 # jobbler-ext
 
-> a chrome extension to track/save your job applications in your notion database
+>  a chrome extension to track/save your job applications in your notion database
+
+### Currently Supporting Website
+- https://weworkremotely.com/
+- https://www.linkedin.com/jobs/
+- https://www.glassdoor.ca/Job/
+-  https://wellfound.com/company/
+-  https://www.simplyhired.ca/
+-  https://startup.jobs/
+-  https://www.google.com/
+-  https://www.monster.ca/
+-  https://apply.workable.com/
+-  https://jobs.lever.co/
+-  https://boards.greenhouse.io/
 
 ## Installing
 
-1. Check if your `Node.js` version is >= **14**.
+1. Check if your `Node.js` version is - = **14**.
 2. Change or configurate the name of your extension on `src/manifest`.
 3. Run `npm install` to install the dependencies.
 
@@ -18,18 +31,23 @@ $ cd jobbler-ext
 $ npm run dev
 ```
 
+### Notion Database Configuration 
+- Follow this https://developers.notion.com/docs/working-with-databases for how to gain **Permissions** on using notion database
+- update .env file with corresponding notion api keys
+- for your database, required properties are: title, url, company 
+
 ### Chrome Extension Developer Mode
 
 1. set your Chrome browser 'Developer mode' up
 2. click 'Load unpacked', and select `jobbler-ext/build` folder
 
-### Nomal FrontEnd Developer Mode
+### FrontEnd Developer Mode
 
 1. access `http://localhost:3000/`
 2. when debugging popup page, open `/popup.html`
 3. when debugging options page, open `/options.html`
 
-## Packing
+## Build
 
 After the development of your extension run the command
 
