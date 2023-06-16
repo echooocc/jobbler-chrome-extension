@@ -116,7 +116,7 @@ function App() {
         {
           target: { tabId: tab.id },
           func: extractJobInfoByDomClassNames,
-          args: ['.listing-header-container h1', '.listing-header-container h2'],
+          args: ['.listing-header-container h1', '.company-card h2 a'],
         },
         (result) => parseDomContentCallBack(result, url),
       )
@@ -213,6 +213,30 @@ function App() {
           target: { tabId: tab.id },
           func: extractJobInfoWithImgAlt,
           args: ['.section.page-centered.posting-header h2', '.main-header-logo img'],
+        },
+        (result) => parseDomContentCallBack(result, url),
+      )
+      return
+    }
+
+    if (url && url.startsWith('https://www.google.com/')) {
+      chrome.scripting.executeScript(
+        {
+          target: { tabId: tab.id },
+          func: extractJobInfoByDomClassNames,
+          args: ['.KLsYvd', '#tl_ditsc .nJlQNd'],
+        },
+        (result) => parseDomContentCallBack(result, url),
+      )
+      return
+    }
+
+    if (url && url.startsWith('https://www.monster.ca/')) {
+      chrome.scripting.executeScript(
+        {
+          target: { tabId: tab.id },
+          func: extractJobInfoByDomClassNames,
+          args: ['.JobViewTitle', 'h2.headerstyle__JobViewHeaderCompany-sc-1ijq9nh-6'],
         },
         (result) => parseDomContentCallBack(result, url),
       )

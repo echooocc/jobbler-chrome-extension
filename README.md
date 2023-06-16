@@ -1,6 +1,6 @@
 # jobbler-ext
 
-> a chrome extension tools built with Vite + React-ts, and Manifest v3
+> a chrome extension to track/save your job applications in your notion database
 
 ## Installing
 
